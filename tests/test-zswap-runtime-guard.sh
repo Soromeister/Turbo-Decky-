@@ -32,6 +32,7 @@ grep -Fqx 'Wants=swap.target' "$ZSWAP_RUNTIME_SERVICE"
 grep -Fqx 'ExecStart=/var/lib/turbodecky/bin/zswap-runtime-activate.sh' "$ZSWAP_RUNTIME_SERVICE"
 grep -Fqx "printf 'lz4\\n' > \"\$params/compressor\"" "$ZSWAP_RUNTIME_HELPER"
 grep -Fqx "printf '35\\n' > \"\$params/max_pool_percent\"" "$ZSWAP_RUNTIME_HELPER"
+! grep -Fq 'zpool' "$ZSWAP_RUNTIME_HELPER"
 remove_zswap_runtime_service
 [[ ! -e "$ZSWAP_RUNTIME_HELPER" ]]
 [[ ! -e "$ZSWAP_RUNTIME_SERVICE" ]]
@@ -74,14 +75,13 @@ mkdir -p "$ZSWAP_SYSFS_DIR"
 printf 'N\n' > "$ZSWAP_SYSFS_DIR/enabled"
 printf 'lz4\n' > "$ZSWAP_SYSFS_DIR/compressor"
 printf '20\n' > "$ZSWAP_SYSFS_DIR/max_pool_percent"
-printf 'zbud\n' > "$ZSWAP_SYSFS_DIR/zpool"
 printf 'N\n' > "$ZSWAP_SYSFS_DIR/shrinker_enabled"
 chmod 0644 "$ZSWAP_SYSFS_DIR"/*
 configure_zswap_runtime
 grep -Fqx '1' "$ZSWAP_SYSFS_DIR/enabled"
 grep -Fqx 'lz4' "$ZSWAP_SYSFS_DIR/compressor"
 grep -Fqx '35' "$ZSWAP_SYSFS_DIR/max_pool_percent"
-grep -Fqx 'zsmalloc' "$ZSWAP_SYSFS_DIR/zpool"
+[[ ! -e "$ZSWAP_SYSFS_DIR/zpool" ]]
 grep -Fqx '1' "$ZSWAP_SYSFS_DIR/shrinker_enabled"
 zswap_runtime_enabled
 

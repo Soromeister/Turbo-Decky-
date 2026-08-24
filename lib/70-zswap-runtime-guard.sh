@@ -23,8 +23,6 @@ configure_zswap_runtime() {
     die "Não foi possível configurar o compressor LZ4 do ZSWAP."
   write_runtime_value "$ZSWAP_SYSFS_DIR/max_pool_percent" 35 || \
     die "Não foi possível configurar o limite do pool do ZSWAP."
-  write_runtime_value "$ZSWAP_SYSFS_DIR/zpool" zsmalloc || \
-    die "Não foi possível configurar o zpool zsmalloc do ZSWAP."
   write_runtime_value "$ZSWAP_SYSFS_DIR/shrinker_enabled" 1 || \
     die "Não foi possível habilitar o shrinker do ZSWAP."
   write_runtime_value "$ZSWAP_SYSFS_DIR/enabled" 1 || \
@@ -45,7 +43,6 @@ readonly params=/sys/module/zswap/parameters
 printf '0\n' > "$params/enabled"
 printf 'lz4\n' > "$params/compressor"
 printf '35\n' > "$params/max_pool_percent"
-printf 'zsmalloc\n' > "$params/zpool"
 printf '1\n' > "$params/shrinker_enabled"
 printf '1\n' > "$params/enabled"
 value="$(cat "$params/enabled")"

@@ -37,6 +37,9 @@ match = re.search(r'^GRUB_CMDLINE_LINUX="([^"]*)"', text, flags=re.M)
 current = shlex.split(match.group(1)) if match else []
 keys = {
     "zswap.enabled", "zswap.compressor", "zswap.max_pool_percent",
+    # Keep this legacy key in the cleanup set so older Turbo Decky command
+    # lines are removed, but do not generate it: current Linux selects
+    # zsmalloc when ZSWAP is built and exposes no zpool parameter.
     "zswap.zpool", "zswap.shrinker_enabled", "mitigations", "audit",
     "nmi_watchdog", "nowatchdog", "split_lock_detect",
 }
@@ -49,7 +52,7 @@ common = ["mitigations=off", "audit=0", "nmi_watchdog=0", "nowatchdog", "split_l
 if mode == "zswap":
     common[:0] = [
         "zswap.enabled=1", "zswap.compressor=lz4",
-        "zswap.max_pool_percent=35", "zswap.zpool=zsmalloc",
+        "zswap.max_pool_percent=35",
         "zswap.shrinker_enabled=1",
     ]
 elif mode == "zram":

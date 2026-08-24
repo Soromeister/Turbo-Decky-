@@ -90,10 +90,10 @@ for token in \
   zswap.enabled=1 \
   zswap.compressor=lz4 \
   zswap.max_pool_percent=35 \
-  zswap.zpool=zsmalloc \
   zswap.shrinker_enabled=1; do
   grep -Fqx "$token" <(tr ' ' '\n' < "$GRUB_FILE")
 done
+! grep -Fq 'zswap.zpool=' "$GRUB_FILE"
 
 # Reproduz o caso do SteamOS: o arquivo existente é um swap válido, porém não
 # tem os 8 GiB exigidos. Mesmo sem o marcador interno do Turbo Decky, ele deve
