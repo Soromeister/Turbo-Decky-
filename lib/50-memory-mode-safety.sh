@@ -29,12 +29,11 @@ configure_zswap_runtime() {
     return 0
   }
 
-  # Disable first so compressor/zpool can be changed safely, then enable only
+  # Disable first so compressor/pool limits can be changed safely, then enable only
   # after a real backing swapfile has been activated.
   write_runtime_value "$ZSWAP_SYSFS_DIR/enabled" 0 || true
   write_runtime_value "$ZSWAP_SYSFS_DIR/compressor" lz4 || true
   write_runtime_value "$ZSWAP_SYSFS_DIR/max_pool_percent" 35 || true
-  write_runtime_value "$ZSWAP_SYSFS_DIR/zpool" zsmalloc || true
   write_runtime_value "$ZSWAP_SYSFS_DIR/shrinker_enabled" 1 || true
   write_runtime_value "$ZSWAP_SYSFS_DIR/enabled" 1 || \
     log "não foi possível ativar o ZSWAP em runtime; ele será ativado no próximo boot"
@@ -66,6 +65,8 @@ snapshot_runtime_once() {
 
   # Keep enabled last. During restore, ZSWAP is disabled first, parameters are
   # restored, and its original enabled state is written only at the end.
+  # Keep zpool only for restoring snapshots made by older releases. It is not
+  # part of the current apply path because modern kernels do not expose it.
   for relative in compressor max_pool_percent zpool shrinker_enabled enabled; do
     file="$ZSWAP_SYSFS_DIR/$relative"
     [[ -r "$file" ]] || continue
@@ -79,7 +80,7 @@ restore_runtime() {
   [[ -n "$ROOTFS" || "$DRY_RUN" == 1 ]] && return 0
 
   # If ZSWAP parameters were captured, turn it off before restoring mutable
-  # compressor/zpool values. Its saved enabled value is the final snapshot row.
+  # compressor/pool-limit values. Its saved enabled value is the final snapshot row.
   if grep -Fq $'sysfs\t'"$ZSWAP_SYSFS_DIR/" "$RUNTIME_SNAPSHOT" 2>/dev/null; then
     write_runtime_value "$ZSWAP_SYSFS_DIR/enabled" 0 || true
   fi

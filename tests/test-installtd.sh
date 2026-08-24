@@ -10,7 +10,7 @@ mkdir -p "$ROOT/etc/sysctl.d" "$ROOT/etc/tmpfiles.d" \
   "$ROOT/etc/security/limits.d" "$ROOT/etc/environment.d" \
   "$ROOT/etc/udev/rules.d" "$ROOT/etc/systemd/system" \
   "$ROOT/usr/local/bin" "$ROOT/var/lib/turbodecky/state" "$ROOT/home"
-printf 'GRUB_CMDLINE_LINUX="quiet splash zswap.enabled=0 mitigations=auto"\n' > "$ROOT/etc/default/grub"
+printf 'GRUB_CMDLINE_LINUX="quiet splash zswap.enabled=0 zswap.zpool=zbud mitigations=auto"\n' > "$ROOT/etc/default/grub"
 printf 'original=1\n' > "$ROOT/etc/sysctl.d/99-turbodecky.conf"
 
 export TURBODECKY_ROOTFS="$ROOT"
@@ -85,6 +85,7 @@ grep -Fq 'zswap.enabled=0' "$GRUB_FILE"
 update_grub_file zswap
 grep -Fq 'zswap.enabled=1' "$GRUB_FILE"
 grep -Fq 'zswap.compressor=lz4' "$GRUB_FILE"
+! grep -Fq 'zswap.zpool=' "$GRUB_FILE"
 [[ "$(grep -o 'zswap.enabled=' "$GRUB_FILE" | wc -l)" -eq 1 ]]
 
 # Exclusão mútua e restauração são testadas com systemctl e sysfs simulados.
@@ -107,7 +108,6 @@ mkdir -p "$ZSWAP_SYSFS_DIR"
 printf '1\n' > "$ZSWAP_SYSFS_DIR/enabled"
 printf 'zstd\n' > "$ZSWAP_SYSFS_DIR/compressor"
 printf '20\n' > "$ZSWAP_SYSFS_DIR/max_pool_percent"
-printf 'zbud\n' > "$ZSWAP_SYSFS_DIR/zpool"
 printf '0\n' > "$ZSWAP_SYSFS_DIR/shrinker_enabled"
 chmod 0644 "$ZSWAP_SYSFS_DIR"/*
 
@@ -119,7 +119,7 @@ configure_zswap_runtime
 grep -Fqx '1' "$ZSWAP_SYSFS_DIR/enabled"
 grep -Fqx 'lz4' "$ZSWAP_SYSFS_DIR/compressor"
 grep -Fqx '35' "$ZSWAP_SYSFS_DIR/max_pool_percent"
-grep -Fqx 'zsmalloc' "$ZSWAP_SYSFS_DIR/zpool"
+[[ ! -e "$ZSWAP_SYSFS_DIR/zpool" ]]
 grep -Fqx '1' "$ZSWAP_SYSFS_DIR/shrinker_enabled"
 
 disable_zswap_runtime
@@ -135,18 +135,16 @@ grep -Fqx 'restart systemd-zram-setup@zram0.service' "$SYSTEMCTL_LOG"
 RUNTIME_SNAPSHOT="$TMP/runtime.tsv"
 printf 'sysfs\t%s/compressor\tzstd\n' "$ZSWAP_SYSFS_DIR" > "$RUNTIME_SNAPSHOT"
 printf 'sysfs\t%s/max_pool_percent\t20\n' "$ZSWAP_SYSFS_DIR" >> "$RUNTIME_SNAPSHOT"
-printf 'sysfs\t%s/zpool\tzbud\n' "$ZSWAP_SYSFS_DIR" >> "$RUNTIME_SNAPSHOT"
 printf 'sysfs\t%s/shrinker_enabled\t0\n' "$ZSWAP_SYSFS_DIR" >> "$RUNTIME_SNAPSHOT"
 printf 'sysfs\t%s/enabled\t1\n' "$ZSWAP_SYSFS_DIR" >> "$RUNTIME_SNAPSHOT"
 printf 'lz4\n' > "$ZSWAP_SYSFS_DIR/compressor"
 printf '35\n' > "$ZSWAP_SYSFS_DIR/max_pool_percent"
-printf 'zsmalloc\n' > "$ZSWAP_SYSFS_DIR/zpool"
 printf '1\n' > "$ZSWAP_SYSFS_DIR/shrinker_enabled"
 printf '0\n' > "$ZSWAP_SYSFS_DIR/enabled"
 restore_runtime
 grep -Fqx 'zstd' "$ZSWAP_SYSFS_DIR/compressor"
 grep -Fqx '20' "$ZSWAP_SYSFS_DIR/max_pool_percent"
-grep -Fqx 'zbud' "$ZSWAP_SYSFS_DIR/zpool"
+[[ ! -e "$ZSWAP_SYSFS_DIR/zpool" ]]
 grep -Fqx '0' "$ZSWAP_SYSFS_DIR/shrinker_enabled"
 grep -Fqx '1' "$ZSWAP_SYSFS_DIR/enabled"
 

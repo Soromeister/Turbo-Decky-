@@ -75,6 +75,9 @@ readonly MANAGED_SERVICES=(
   "cups.service"
 )
 
+# zswap.zpool is kept only so an older Turbo Decky command line is removed
+# during migration; current kernels select zsmalloc at build time and the
+# profile never emits or writes this obsolete parameter.
 readonly MANAGED_GRUB_KEYS=(
   zswap.enabled zswap.compressor zswap.max_pool_percent zswap.zpool
   zswap.shrinker_enabled mitigations audit nmi_watchdog nowatchdog

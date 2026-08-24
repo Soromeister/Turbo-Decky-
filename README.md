@@ -94,8 +94,9 @@ As configurações aplicadas são persistentes em uma reinicialização normal:
 - SCX LAVD e `fstrim.timer` quando ativados.
 
 Ao selecionar o perfil ZSWAP, o Turbo Decky usa `zswap.compressor=lz4`,
-pool de 35% com `zsmalloc` e uma unidade systemd para reaplicar esses
-parâmetros depois que o swapfile estiver disponível no boot.
+limita o pool a 35% e usa o backend `zsmalloc` selecionado pelo próprio
+kernel. Uma unidade systemd reaplica os parâmetros configuráveis depois que
+o swapfile estiver disponível no boot.
 
 Uma atualização do SteamOS pode substituir configurações, pacotes ou o kernel e exigir nova aplicação. A reversão restaura o snapshot capturado antes da primeira aplicação.
 
